@@ -16,6 +16,7 @@ DevOps
 ├─ Infrastructure
 ├─ Automation
 ├─ Observability
+├─ Kubernetes
 └─ Troubleshooting
 
 Architecture
@@ -67,6 +68,7 @@ Operational engineering: infrastructure as code, automation, monitoring, inciden
 - `DevOps / Infrastructure`: cloud resources, containers, networked runtime, service foundations
 - `DevOps / Automation`: Ansible, CI/CD, repeatable provisioning/deployment
 - `DevOps / Observability`: monitoring, alerting, logs, health checks, auto-diagnosis
+- `DevOps / Kubernetes`: k3s/Kubernetes, GitOps, cluster operations, ingress, and pod-level service operations
 - `DevOps / Troubleshooting`: practical failure analysis in infra/dev environments
 
 ### Architecture

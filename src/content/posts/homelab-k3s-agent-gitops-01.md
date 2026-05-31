@@ -4,7 +4,7 @@ published: 2026-05-31
 description: "Docker Compose 기반 홈랩을 k3s와 GitOps로 점진 전환해, AI Agent가 Pod 단위로 배포·조회·복구하기 쉬운 운영면을 만드는 첫 기록."
 lang: "ko"
 draft: false
-category: "Architecture / Homelab"
+category: "DevOps / Kubernetes"
 tags: ["Homelab", "k3s", "Kubernetes", "GitOps", "AI Agent", "Docker Compose", "Cloudflare Tunnel", "Nginx Proxy Manager", "Pod", "n4000", "n4200"]
 ---
 
