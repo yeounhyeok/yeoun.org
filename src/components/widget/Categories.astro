@@ -1,0 +1,143 @@
+---
+import I18nKey from "../../i18n/i18nKey";
+import { i18n } from "../../i18n/translation";
+import WidgetLayout from "./WidgetLayout.astro";
+import { taxonomyTree, type TaxonomyNode } from "../../data/taxonomy";
+import { getSortedPostsList } from "../../utils/content-utils";
+import { getCategoryUrl, getTagUrl } from "../../utils/url-utils";
+
+const posts = await getSortedPostsList();
+const categoryCounts = new Map<string, number>();
+const tagCounts = new Map<string, number>();
+
+for (const post of posts) {
+	const category = post.data.category?.trim();
+	if (category) categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1);
+	for (const tag of post.data.tags ?? []) {
+		tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+	}
+}
+
+const COLLAPSED_HEIGHT = "18rem";
+const isCollapsed = true;
+
+interface Props {
+	class?: string;
+	style?: string;
+}
+const className = Astro.props.class;
+const style = Astro.props.style;
+
+const escapeHtml = (value: string) => value
+	.replaceAll("&", "&amp;")
+	.replaceAll("<", "&lt;")
+	.replaceAll(">", "&gt;")
+	.replaceAll('"', "&quot;");
+
+const categoryName = (node: TaxonomyNode, ancestors: string[]) => `${ancestors[0]} / ${node.name}`;
+const countFor = (node: TaxonomyNode, ancestors: string[]) => {
+	if (node.kind === "category") return categoryCounts.get(categoryName(node, ancestors)) ?? 0;
+	if (node.kind === "tag") return tagCounts.get(node.name) ?? 0;
+	return 0;
+};
+const hrefFor = (node: TaxonomyNode, ancestors: string[]) => {
+	if (node.kind === "category") return getCategoryUrl(categoryName(node, ancestors));
+	if (node.kind === "tag") return getTagUrl(node.name);
+	return undefined;
+};
+const renderNode = (node: TaxonomyNode, ancestors: string[] = [], depth = 0): string => {
+	const href = hrefFor(node, ancestors);
+	const count = countFor(node, ancestors);
+	const cls = depth === 0 ? "tree-root" : node.kind === "category" ? "tree-category" : node.kind === "tag" ? "tree-tag" : "tree-group";
+	const prefix = depth === 0 ? "" : `${"│  ".repeat(Math.max(0, depth - 1))}ㄴ `;
+	const countHtml = count > 0 ? `<span class="sidebar-tree-count">${count}</span>` : "";
+	const title = node.kind === "category" ? `View posts in ${categoryName(node, ancestors)}` : node.kind === "tag" ? `View posts tagged ${node.name}` : node.name;
+	const label = href
+		? `<a class="sidebar-tree-label ${cls}" href="${escapeHtml(href)}" aria-label="${escapeHtml(title)}">${escapeHtml(node.name)}${countHtml}</a>`
+		: `<span class="sidebar-tree-label ${cls}">${escapeHtml(node.name)}${countHtml}</span>`;
+	return `<div class="sidebar-tree-row" style="--depth: ${depth}"><span class="sidebar-tree-prefix">${escapeHtml(prefix)}</span>${label}</div>${(node.children ?? []).map((child) => renderNode(child, [...ancestors, node.name], depth + 1)).join("")}`;
+};
+const treeHtml = taxonomyTree.map((node) => renderNode(node)).join("");
+---
+
+<WidgetLayout name={i18n(I18nKey.categories)} id="categories" isCollapsed={isCollapsed} collapsedHeight={COLLAPSED_HEIGHT}
+                class={className} style={style}
+>
+    <div class="sidebar-taxonomy-tree" set:html={treeHtml}></div>
+</WidgetLayout>
+
+<style is:global>
+    #categories .sidebar-taxonomy-tree {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 0.78rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+    }
+    #categories .sidebar-tree-row {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        min-height: 1.55rem;
+        white-space: nowrap;
+    }
+    #categories .sidebar-tree-prefix {
+        color: rgba(128, 128, 128, 0.72);
+        user-select: none;
+        letter-spacing: -0.04em;
+    }
+    #categories .sidebar-tree-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.28rem;
+        max-width: 15rem;
+        border-radius: 0.55rem;
+        padding: 0.02rem 0.38rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: background 0.16s ease, color 0.16s ease, transform 0.16s ease;
+    }
+    #categories a.sidebar-tree-label:hover {
+        background: rgba(var(--primary-rgb), 0.13);
+        color: rgb(var(--primary-rgb));
+        transform: translateX(2px);
+    }
+    #categories .tree-root {
+        font-weight: 800;
+        color: rgb(23 23 23);
+    }
+    .dark #categories .tree-root {
+        color: rgb(255 255 255);
+    }
+    #categories .tree-category {
+        font-weight: 700;
+        color: rgb(38 38 38);
+    }
+    .dark #categories .tree-category {
+        color: rgb(245 245 245);
+    }
+    #categories .tree-group {
+        font-weight: 650;
+        color: rgb(64 64 64);
+    }
+    .dark #categories .tree-group {
+        color: rgb(229 229 229);
+    }
+    #categories .tree-tag {
+        color: rgb(64 64 64);
+    }
+    .dark #categories .tree-tag {
+        color: rgb(229 229 229);
+    }
+    #categories .sidebar-tree-count {
+        flex: none;
+        min-width: 1.15rem;
+        padding: 0 0.28rem;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        line-height: 1.25rem;
+        text-align: center;
+        color: var(--btn-content);
+        background: rgba(127, 127, 127, 0.13);
+    }
+</style>

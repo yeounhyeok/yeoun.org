@@ -1,0 +1,7 @@
+services:
+  astro-blog:
+    build: .
+    container_name: astro-blog
+    restart: unless-stopped
+    ports:
+      - "8084:80"

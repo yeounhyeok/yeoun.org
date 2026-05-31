@@ -1,0 +1,167 @@
+---
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { taxonomyTree, type TaxonomyNode } from "@/data/taxonomy";
+import { getSortedPostsList } from "@utils/content-utils";
+import { getCategoryUrl, getTagUrl, getPostUrlBySlug } from "@utils/url-utils";
+
+const posts = await getSortedPostsList();
+const categoryCounts = new Map<string, number>();
+const tagCounts = new Map<string, number>();
+
+for (const post of posts) {
+	const category = post.data.category?.trim();
+	if (category) categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1);
+	for (const tag of post.data.tags ?? []) {
+		tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+	}
+}
+
+const escapeHtml = (value: string) => value
+	.replaceAll("&", "&amp;")
+	.replaceAll("<", "&lt;")
+	.replaceAll(">", "&gt;")
+	.replaceAll('"', "&quot;");
+
+const categoryName = (node: TaxonomyNode, ancestors: string[]) => `${ancestors[0]} / ${node.name}`;
+const countFor = (node: TaxonomyNode, ancestors: string[]) => {
+	if (node.kind === "category") return categoryCounts.get(categoryName(node, ancestors)) ?? 0;
+	if (node.kind === "tag") return tagCounts.get(node.name) ?? 0;
+	return 0;
+};
+const hrefFor = (node: TaxonomyNode, ancestors: string[]) => {
+	if (node.kind === "category") return getCategoryUrl(categoryName(node, ancestors));
+	if (node.kind === "tag") return getTagUrl(node.name);
+	return undefined;
+};
+const renderNode = (node: TaxonomyNode, ancestors: string[] = [], depth = 0): string => {
+	const href = hrefFor(node, ancestors);
+	const count = countFor(node, ancestors);
+	const cls = depth === 0 ? "tree-root" : node.kind === "category" ? "tree-category" : node.kind === "tag" ? "tree-tag" : "tree-group";
+	const prefix = depth === 0 ? "" : `${"│  ".repeat(Math.max(0, depth - 1))}ㄴ `;
+	const countHtml = count > 0 ? `<span class="tree-count">${count}</span>` : "";
+	const label = href
+		? `<a class="tree-label ${cls}" href="${escapeHtml(href)}">${escapeHtml(node.name)}${countHtml}</a>`
+		: `<span class="tree-label ${cls}">${escapeHtml(node.name)}${countHtml}</span>`;
+	return `<div class="tree-row"><span class="tree-prefix">${escapeHtml(prefix)}</span>${label}</div>${(node.children ?? []).map((child) => renderNode(child, [...ancestors, node.name], depth + 1)).join("")}`;
+};
+const treeHtml = taxonomyTree.map((node) => renderNode(node)).join("");
+const featuredPosts = posts.slice(0, 8);
+---
+
+<MainGridLayout title="Stack Tree">
+	<section class="card-base taxonomy-hero rounded-[var(--radius-large)] p-6 md:p-8 mb-4">
+		<p class="text-sm text-50 mb-2">yeoun.org taxonomy</p>
+		<h1 class="text-3xl md:text-4xl font-bold text-90 mb-3">Stack Tree</h1>
+		<p class="text-75 leading-7 max-w-3xl">
+			운영 중인 홈랩, Hermes 런타임, GitHub 연구 레포, 기술블로그 글을 하나의 기술 스택 트리로 묶은 지도입니다.
+			상위 노드는 관심 영역, 하위 노드는 실제 도구·프로젝트·개념입니다.
+		</p>
+	</section>
+
+	<section class="card-base rounded-[var(--radius-large)] p-5 md:p-7 mb-4">
+		<div class="flex items-center justify-between gap-3 mb-5">
+			<h2 class="text-2xl font-bold text-90">Technical Stack Tree</h2>
+			<a class="btn-regular px-4 py-2 rounded-lg text-sm" href="/archive/">Archive</a>
+		</div>
+
+		<div class="taxonomy-tree" set:html={treeHtml}></div>
+	</section>
+
+	<section class="card-base rounded-[var(--radius-large)] p-5 md:p-7">
+		<h2 class="text-2xl font-bold text-90 mb-4">Recent evidence</h2>
+		<div class="grid gap-3">
+			{featuredPosts.map((post) => (
+				<a class="evidence-row rounded-xl px-4 py-3" href={getPostUrlBySlug(post.slug)}>
+					<div class="font-semibold text-90">{post.data.title}</div>
+					<div class="text-sm text-50 mt-1">{post.data.category} · {(post.data.tags ?? []).slice(0, 5).join(" / ")}</div>
+				</a>
+			))}
+		</div>
+	</section>
+</MainGridLayout>
+
+<style is:global>
+	.taxonomy-hero {
+		background:
+			radial-gradient(circle at top left, rgba(var(--primary-rgb), 0.18), transparent 34rem),
+			var(--card-bg);
+	}
+	.taxonomy-tree {
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+		font-size: 0.93rem;
+		line-height: 1.8;
+	}
+	.taxonomy-tree .tree-row {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+		min-height: 1.9rem;
+		white-space: nowrap;
+	}
+	.taxonomy-tree .tree-prefix {
+		color: rgba(120, 120, 120, 0.75);
+		user-select: none;
+	}
+	.taxonomy-tree .tree-label {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		border-radius: 999px;
+		padding: 0.08rem 0.55rem;
+		transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+	}
+	.taxonomy-tree .tree-label[href]:hover {
+		background: rgba(var(--primary-rgb), 0.14);
+		color: rgb(var(--primary-rgb));
+		transform: translateX(2px);
+	}
+	.taxonomy-tree .tree-root {
+		font-weight: 800;
+		color: rgb(23 23 23);
+	}
+	.dark .taxonomy-tree .tree-root {
+		color: rgb(255 255 255);
+	}
+	.taxonomy-tree .tree-category {
+		font-weight: 700;
+		color: rgb(38 38 38);
+	}
+	.dark .taxonomy-tree .tree-category {
+		color: rgb(245 245 245);
+	}
+	.taxonomy-tree .tree-tag {
+		color: rgb(64 64 64);
+	}
+	.dark .taxonomy-tree .tree-tag {
+		color: rgb(229 229 229);
+	}
+	.taxonomy-tree .tree-group {
+		font-weight: 650;
+		color: rgb(64 64 64);
+	}
+	.dark .taxonomy-tree .tree-group {
+		color: rgb(229 229 229);
+	}
+	.taxonomy-tree .tree-count {
+		font-size: 0.72rem;
+		font-family: inherit;
+		opacity: 0.7;
+		padding: 0 0.35rem;
+		border-radius: 999px;
+		background: rgba(127, 127, 127, 0.12);
+	}
+	.evidence-row {
+		background: rgba(127, 127, 127, 0.08);
+		transition: background 0.18s ease, transform 0.18s ease;
+	}
+	.evidence-row:hover {
+		background: rgba(var(--primary-rgb), 0.12);
+		transform: translateY(-1px);
+	}
+	@media (max-width: 768px) {
+		.taxonomy-tree {
+			overflow-x: auto;
+			padding-bottom: 0.5rem;
+		}
+	}
+</style>
