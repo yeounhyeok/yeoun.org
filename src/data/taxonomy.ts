@@ -14,6 +14,7 @@ export const taxonomyTree: TaxonomyNode[] = [
 			{ name: "Infrastructure", kind: "category" },
 			{ name: "Automation", kind: "category" },
 			{ name: "Observability", kind: "category" },
+			{ name: "Kubernetes", kind: "category" },
 			{ name: "Troubleshooting", kind: "category" },
 		],
 	},
