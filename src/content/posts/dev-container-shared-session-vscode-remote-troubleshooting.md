@@ -4,7 +4,7 @@ published: 2026-05-31
 description: "VS Code Dev Containers를 여러 사람이 하나의 컨테이너에 동시에 붙여 쓰려다 발생한 ECONNRESET, ECONNREFUSED, 포트 포워딩 오류를 분석하고 사용자별 컨테이너 분리 원칙으로 정리한 트러블슈팅 기록."
 lang: "ko"
 draft: false
-category: "DevOps / Infrastructure"
+category: "DevOps / Troubleshooting"
 tags: ["Dev Container", "VS Code Remote", "Docker", "Port Forwarding", "CUDA", "Development Environment", "Troubleshooting", "Remote Development"]
 ---
 

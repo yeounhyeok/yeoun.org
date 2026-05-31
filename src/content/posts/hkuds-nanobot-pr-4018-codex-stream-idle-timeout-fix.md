@@ -4,7 +4,7 @@ published: 2026-05-31
 description: "HKUDS NanoBot Codex provider가 NANOBOT_STREAM_IDLE_TIMEOUT_S를 존중하도록 수정한 upstream merged PR 기록."
 lang: "ko"
 draft: false
-category: "Open Source / Contributions"
+category: "AI Platform / Open Source"
 tags: ["Open Source", "AI Agent", "NanoBot", "Codex", "Provider Stability", "Stream Timeout", "MLOps", "LLM Runtime", "Provider Layer", "Environment Variables"]
 ---
 
