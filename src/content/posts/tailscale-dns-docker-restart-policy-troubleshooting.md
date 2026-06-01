@@ -33,6 +33,22 @@ tags: ["Homelab", "Docker", "Tailscale", "DNS", "AdGuard Home", "Glances", "Ngin
 - **Glances**: 서버 리소스를 보는 Python 기반 모니터링 도구다. Docker plugin을 켜면 Docker socket을 통해 컨테이너 stats stream을 계속 읽는다.
 - **Hermes Agent**: 내가 쓰는 개인 AI 에이전트 런타임이다. Discord DM에서 요청을 받고 SSH, 터미널, 파일, 로그 조회 같은 도구를 호출해 홈서버를 진단할 수 있다.
 
+## 왜 k3s만으로는 이 장애를 고칠 수 없나
+
+이 사건은 “나중에 k3s로 옮기면 자동복구되겠지”로 정리하기 어렵다. Kubernetes의 self-healing은 강력하지만, 전제 조건이 있다. **컨테이너 런타임과 호스트 OS가 정상이고, kubelet이 control plane과 계속 통신할 수 있어야 한다.**
+
+이번 장애는 그 전제를 흔들었다. Docker daemon이 직접 stop되거나 fatal crash를 내면, 그 위에서 돌아가는 오케스트레이션 계층은 컨테이너를 정상적으로 관찰하고 제어할 발판을 잃는다. 또한 root crontab, host reboot script, Glances systemd service, Tailscale DNS upstream 같은 요소는 Kubernetes 리소스가 아니다. k3s가 Pod 상태는 볼 수 있어도 “월요일 03:30 cron이 Docker를 내렸고, 재부팅 후 Glances가 Docker stats API를 찔렀다”는 인과관계를 네이티브하게 추론하긴 어렵다.
+
+그래서 이 케이스는 에이전트의 필요성을 오히려 더 분명하게 만든다. Hermes 같은 에이전트는 `kubectl`만 치는 봇이 아니라, SSH로 호스트에 들어가 `journalctl`, cron 로그, Docker events, DNS 질의, Tailscale 상태를 함께 읽고 레이어 사이의 인과관계를 묶는 역할을 해야 한다.
+
+```text
+장애 감지: DNS / HTTP down
+  -> Kubernetes 관점: Pod 또는 Service 이상 여부 확인
+  -> Agent 관점: host cron, Docker daemon, restart policy, Glances, Tailscale DNS까지 상관분석
+```
+
+즉 k3s는 Pod 레벨 복구에 맡기고, 에이전트는 **호스트-런타임-네트워크 경계에서 생기는 장애를 추론하고 격리하는 SRE 파트너**로 두는 것이 더 현실적인 설계다.
+
 ## 증상
 
 문제의 시작은 DNS였다.
@@ -345,6 +361,8 @@ Glances 제거
 셋째, “안전한 재부팅 스크립트”가 정말 안전한지 봐야 한다. Docker를 먼저 내리는 방식은 깔끔해 보이지만, 실제로는 Docker의 restart policy와 충돌할 수 있다. 재부팅은 systemd에게 맡기고, 재부팅 후 health check를 두는 편이 더 운영 친화적이다.
 
 넷째, 모니터링 도구도 장애 원인이 될 수 있다. 특히 Docker socket을 읽는 도구는 단순 관찰자가 아니다. daemon API를 지속적으로 호출하는 클라이언트다. 안 쓰는 모니터링 도구는 제거하는 게 가장 좋은 hardening이다.
+
+다섯째, 오케스트레이터와 에이전트의 역할을 분리해야 한다. k3s는 정상적인 런타임 위에서 Pod를 되살리는 데 강하고, Hermes 같은 에이전트는 그 아래의 호스트 OS, daemon, cron, DNS, tunnel 레이어를 함께 조사하는 데 강하다. 둘은 대체 관계가 아니라 서로 다른 장애 경계를 맡는 구조다.
 
 ## 결론
 
