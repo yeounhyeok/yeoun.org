@@ -18,6 +18,89 @@ MOA/SW-HUB dev 인프라의 Terraform GitOps 파이프라인을 정리하면서 
 
 GitHub Actions에 `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`를 저장하는 대신, GitHub OIDC와 AWS STS를 이용해 매 실행마다 짧게 살아있는 임시 자격 증명을 발급받는 구조로 만들었다.
 
+## 먼저 용어부터 정리하기
+
+이 흐름을 이해하려면 GitHub Actions, OIDC, AWS STS가 각각 무슨 역할을 하는지 먼저 잡아야 한다. 세 개를 한 문장으로 줄이면 이렇다.
+
+```text
+GitHub Actions = 일을 실행하는 CI 러너
+OIDC           = GitHub가 “이 실행은 이 레포의 이 워크플로가 맞다”고 증명하는 신원 증명 방식
+AWS STS        = 그 증명을 보고 AWS 임시 자격 증명을 발급하는 서비스
+```
+
+### GitHub Actions
+
+**GitHub Actions**는 GitHub 안에서 CI/CD 작업을 실행하는 자동화 플랫폼이다. PR이 열리거나, 특정 브랜치에 push되거나, 수동으로 워크플로를 실행할 때 GitHub가 러너를 띄우고 YAML에 적힌 작업을 수행한다.
+
+이 글에서는 GitHub Actions가 Terraform을 실행하는 주체다.
+
+```text
+PR 생성
+  -> GitHub Actions runner 실행
+  -> terraform plan
+  -> PR 코멘트 작성
+
+dev 브랜치 push
+  -> GitHub Actions runner 실행
+  -> 승인 게이트 통과
+  -> terraform apply
+```
+
+여기서 중요한 점은 러너가 매번 새로 뜨는 실행 환경이라는 것이다. 그래서 러너가 AWS에 접근하려면 어떤 방식으로든 AWS 자격 증명을 얻어야 한다.
+
+가장 단순한 방식은 GitHub Secrets에 AWS access key를 넣는 것이다. 하지만 이 방식은 장기 키를 CI에 보관하게 된다. 이번 구조에서는 그 대신 OIDC를 사용했다.
+
+### OIDC
+
+**OIDC, OpenID Connect**는 한 시스템이 다른 시스템에게 “이 사용자가 누구인지” 또는 “이 실행이 어떤 주체인지”를 증명할 때 쓰는 인증 계층이다. OAuth 2.0 위에 identity layer를 얹은 방식이라고 볼 수 있다.
+
+GitHub Actions에서는 워크플로 실행 중에 GitHub가 OIDC 토큰, 정확히는 짧게 살아있는 JWT를 발급한다. 이 토큰 안에는 이 실행이 어떤 레포, 어떤 브랜치, 어떤 워크플로에서 왔는지 같은 클레임이 들어간다.
+
+예를 들어 이번 구조에서 중요한 클레임은 이런 형태다.
+
+```text
+issuer   = token.actions.githubusercontent.com
+audience = sts.amazonaws.com
+subject  = repo:MOA-Crew/iac:*
+```
+
+AWS는 이 토큰을 보고 “정말 GitHub가 발급한 토큰인가?”, “AWS STS를 대상으로 발급된 토큰인가?”, “내가 신뢰하기로 한 레포에서 온 실행인가?”를 확인한다.
+
+즉 OIDC는 GitHub Actions가 AWS에 비밀번호를 넘기는 방식이 아니라, **GitHub가 서명한 신원 증명서를 AWS에 제시하는 방식**에 가깝다.
+
+### AWS STS
+
+**AWS STS, Security Token Service**는 AWS에서 임시 보안 자격 증명을 발급하는 서비스다. 장기 access key를 직접 쓰는 대신, 특정 조건을 만족한 주체에게 짧은 시간 동안만 유효한 access key, secret access key, session token을 발급한다.
+
+이번 흐름에서는 GitHub Actions가 OIDC 토큰을 AWS STS에 제시하고, STS는 `AssumeRoleWithWebIdentity`를 통해 IAM role의 임시 자격 증명을 발급한다.
+
+```text
+GitHub Actions
+  -> OIDC JWT 제시
+  -> AWS STS AssumeRoleWithWebIdentity 호출
+  -> IAM role 신뢰 정책 검사
+  -> 통과하면 임시 자격 증명 발급
+```
+
+이 임시 자격 증명은 보통 짧은 시간만 유효하다. 그래서 유출되더라도 장기 키보다 피해 범위를 줄일 수 있고, role의 policy로 어떤 AWS 리소스에 접근할 수 있는지도 제한할 수 있다.
+
+### 세 개를 연결하면
+
+세 도구의 관계를 다시 정리하면 이렇다.
+
+<table>
+  <thead>
+    <tr><th>구성 요소</th><th>역할</th><th>이 글에서의 의미</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>GitHub Actions</td><td>CI/CD 실행기</td><td>Terraform plan/apply를 실행하는 러너</td></tr>
+    <tr><td>OIDC</td><td>신원 증명 방식</td><td>GitHub 실행이 신뢰한 레포에서 왔다는 것을 JWT로 증명</td></tr>
+    <tr><td>AWS STS</td><td>임시 자격 증명 발급 서비스</td><td>OIDC 토큰을 검증한 뒤 Terraform용 IAM role credential 발급</td></tr>
+  </tbody>
+</table>
+
+결국 이 구조는 “GitHub에 AWS 비밀번호를 저장한다”가 아니라, **GitHub가 자신의 실행 신원을 증명하고 AWS가 그 신원을 믿을 때만 짧은 권한을 빌려주는 구조**다.
+
 ## 전체 흐름
 
 현재 dev 인프라 배포 흐름은 다음과 같다.
