@@ -122,9 +122,9 @@ Problem solving and algorithm study.
 ```text
 DevOps / Infrastructure
 - MOA CREW IaC 레포를 만들며: Terraform과 Ansible은 왜 필요한가
+- MOA dev 인프라 CI/CD와 인증 흐름 정리
 
 DevOps / Automation
-- MOA dev 인프라 CI/CD와 인증 흐름 정리
 - [Ansible] Hybrid Cloud 인프라 자동화 및 분산 배포
 
 DevOps / Observability

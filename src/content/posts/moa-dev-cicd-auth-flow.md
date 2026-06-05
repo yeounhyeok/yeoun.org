@@ -4,8 +4,8 @@ published: 2026-06-06
 description: "MOA/SW-HUB dev 인프라에서 GitHub Actions, AWS OIDC, Terraform, Cloudflare Tunnel, EC2 런타임 인증을 어떻게 분리했는지 정리했다."
 lang: "ko"
 draft: false
-category: "DevOps / Automation"
-tags: ["MOA-CREW", "CI/CD", "Terraform", "GitHub Actions", "OIDC", "AWS", "IAM", "STS", "Cloudflare", "RDS", "S3", "EC2", "IMDSv2"]
+category: "DevOps / Infrastructure"
+tags: ["MOA-CREW", "CI/CD", "GitOps", "Terraform", "GitHub Actions", "OIDC", "AWS", "IAM", "STS", "Cloudflare", "RDS", "S3", "EC2", "IMDSv2"]
 ---
 
 인프라 자동화에서 가장 신경 쓰이는 부분은 “자동으로 배포된다” 자체가 아니다. 진짜 질문은 따로 있다.
