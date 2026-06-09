@@ -45,6 +45,17 @@ N = 3,558
 중복 행 = 18행
 ```
 
+분석에 사용한 검증판 CSV도 같이 공개한다. 파일은 선관위 VCCP08 `개표단위별 개표결과`에서 수집한 읍면동 단위 데이터이며, 이 글의 통계량은 이 CSV 기준으로 다시 계산했다.
+
+```text
+파일명: vccp08_2026_gubernatorial_town_early_vote_verified.csv
+행 수: 11,698 data rows + header
+크기: 약 6.4 MB
+SHA-256: 9fca5e4a6c0fca03794f96d700552880d717ebb0b6a9f3035e91877fdb3b7643
+```
+
+[분석 CSV 다운로드](/datasets/election-vote-pair-entropy-analysis/vccp08_2026_gubernatorial_town_early_vote_verified.csv)
+
 즉 대부분의 득표쌍은 한 번씩만 나온다. 전체 3,558개 행에서 반복된 1·2위 득표쌍은 9종뿐이다.
 
 이 숫자만 보면 두 가지 해석이 동시에 가능하다.
