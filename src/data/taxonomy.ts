@@ -75,4 +75,10 @@ export const taxonomyTree: TaxonomyNode[] = [
 			{ name: "BOJ", kind: "tag" },
 		],
 	},
+	{
+		name: "Mathematics",
+		children: [
+			{ name: "Statistics", kind: "category" },
+		],
+	},
 ];

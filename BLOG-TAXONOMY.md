@@ -57,6 +57,9 @@ Algorithms
 ├─ Dynamic Programming
 ├─ Graph
 └─ BOJ
+
+Mathematics
+└─ Statistics
 ```
 
 ## Category intent
@@ -116,6 +119,12 @@ Problem solving and algorithm study.
 
 - `Algorithms / Problem Solving`: BOJ and algorithm notes
 - tags split topics such as `Dynamic Programming`, `Graph`, `Shortest Path`, `C++`
+
+### Mathematics
+
+Mathematical/statistical reasoning posts where the main value is the model, formula, or interpretation method rather than a software build.
+
+- `Mathematics / Statistics`: probability, entropy, distributions, statistical interpretation, and data reasoning posts.
 
 ## Current post mapping
 
