@@ -23,7 +23,7 @@ export const taxonomyTree: TaxonomyNode[] = [
 		children: [
 			{ name: "Homelab", kind: "category" },
 			{ name: "Hybrid Cloud", kind: "group" },
-			{ name: "Network", kind: "group" },
+			{ name: "Network", kind: "category" },
 			{ name: "Security / Access", kind: "group" },
 			{ name: "Troubleshooting", kind: "category" },
 		],

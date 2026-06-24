@@ -79,6 +79,7 @@ Operational engineering: infrastructure as code, automation, monitoring, inciden
 System-level shape and tradeoffs: homelab topology, hybrid cloud, network/security boundaries, and long-lived service architecture.
 
 - `Architecture / Homelab`: home server/service topology and node roles
+- `Architecture / Network`: domain delegation, DNS, tunnels, reverse proxies, and network routing boundaries
 - `Architecture / Troubleshooting`: architectural failures where the fix is boundary/topology redesign
 
 ### AI Platform
@@ -141,6 +142,9 @@ DevOps / Observability
 
 DevOps / Troubleshooting
 - 개발 컨테이너는 공유하되, 세션은 공유하지 말자
+
+Architecture / Network
+- 가비아 도메인을 Cloudflare로 위임해서 DNS 관리권 가져오기
 
 Architecture / Homelab
 - [Architecture] 윈도우 전용 노트북을 하이브리드 클라우드 워커로
