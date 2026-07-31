@@ -360,6 +360,11 @@ location / {
 
 `proxy_buffering off`로 nginx가 SSE 응답을 실시간으로 전달. `proxy_read_timeout 86400s`(24시간)로 긴 연결 유지.
 
+
+![Claude 모바일 앱에서 Obsidian MCP 연결 성공 화면](/images/claude-mcp-connected.jpg)
+
+_Claude 모바일 앱에서 Obsidian 볼트 MCP 연결 성공. 카테고리 목록이 정상적으로 표시되고 있다._
+
 ## Hermes vs Claude: 에이전틱 AI로서 두 역할
 
 이 과정을 하면서, 같은 "Obsidian 볼트에 접근하는 AI"라도 **Hermes와 Claude의 역할이 근본적으로 다르다**는 걸 체감했다. 두 축은 모델 선택의 근거가 다르고, 인증 방식이 다르고, 강점이 다르다.
